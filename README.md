@@ -1,17 +1,97 @@
-Release: 0.1.0
+<h1>Release: 0.4.0</h1>
 
-This is a project that is based on the vmangos core running on Docker. 
+This is a project that is based on the VMaNGOS core running on Docker. 
 
 Source code from https://github.com/vmangos/core.
 
-To setup this project first run the docker-build.sh to compile all of the necessary binaries and to create all of the necessary containers. Place dependencies labeled appropriately as listed: /src/data, /src/maps, /src/mmaps, /src/vmaps, /src/5875(adjust according to patch release), /src/5875/tbc. Next run docker-compose up vmangos_database and then exit container once process is finished and run docker-compose up -d.
+Website code from https://gitlab.com/omghixd/fusiongen.git.
 
-Changes to most of these configs requires docker container rebuild or a manual change after docker containers are built to apply any changes.
-Mangos config: vmangos/etc/mangosd.conf
-Realmd config: vmangos/etc/realmd.conf
-Server config: server.env
-Database config: db.env
-Database volume: docker/database/mysql
+The configuration should be configured to work with localhost games and can be edited by changing the realmd.realmd table and adding the correct server information.
+Changing the exposed port for mysql should also be considered if not removing it all together. Website functionality will be configured with a separate function within setup.sh.
 
-For updates that are applied on either of the src/ repositories run update.sh at your own risk in case of any breakage or changes. 
+<h2>Arm Notice:</h2>
 
+Make sure the change the value of 'make -j$(nprocs)' to 'make -j1' or 'make -j2' in the last line of '/docker/build/Dockerfile' depending on if platform has less than 4GB of ram. 
+```
+vim /docker/build/Dockerfile
+```
+```
+#change according to platform specs
+... make -j$(nproc) ...
+```
+
+<h2>Step 1:</h2>
+<h3>Requirements:</h3>
+
+* Git installed
+
+* Docker-CE installed
+
+* Docker Compose installed
+
+* Operating System that is 64 bit (Currently Raspbian is only 32bit)
+
+* Python 3.5+ installed
+
+* Tmux(recommended for docker attach)
+
+<h2>Step 2:</h2>
+<h3> a.) Place dependencies as listed below:</h3> 
+
+* /src/data 
+* /src/data/maps
+* /src/data/mmaps
+* /src/data/vmaps
+* /src/data/5875(adjust according to patch release)
+* /src/data/5875/dbc
+* /src/ccache
+
+<h3>b.) Configuration Files:(*)</h3>
+
+* Server config: 	/config
+* Database config: 	/env/db.env
+* Database config: 	/db/my.cnf
+* VMaNGOS: 		/vmangos
+* Database volume: 	/var/lib/docker/volumes/vmangos_database
+* Website config: 	/web
+
+<h2>Step 3:</h2>
+<h3>a). Run setup.py for creating containers and for managing this project.</h3>
+  
+```
+chmod +x 
+./setup.py
+```
+
+<h3>b). Configure realm ip address</h3>
+Use mysql-workbench or from the vmangos_database container edit the ip address column in realmd.realmlist to set the ip that will be exposed for connections(public ip required for internet). Using the account and password for the mangos user or the root user as can be configured in db.env. 
+
+<h2>Step 4:</h2>
+<h3> a). Website file configuration</h3>
+
+Make sure to edit /web/site.conf and change the server_name
+```
+vim web/site.conf
+server_name ${FQDN};
+```
+<h3> b). Website installation</h3>
+
+1. Visit http://${FQDN}/install
+2. Proceed with installation steps 
+
+<h2>List of Commands:</h2>
+<h3>General commands(All docker-compose commands must be run from within the project directory)</h3>
+
+```
+docker-compose up (Creates and runs containers with console output)
+docker-compose up -d (Creates and detaches from running containers)
+docker-compose ps (Lists all running containers)
+docker-compose stop (Stops containers without destroying)
+docker-compose restart (Restart containers)
+docker-compose down (Destroys containers)
+docker-compose down -v (Destroys containers and volumes)
+docker-compose exec vmangos_(container) bash (Executes bash inside container of choice)
+docker ps (Lists all running docker processes)
+#using tmux/screen is recommended to not kill
+docker attach (applies to the vmangos_mangos/realmd/database)  session
+```
